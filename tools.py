@@ -125,14 +125,12 @@ class SearchPath:
         return firstPath + secondPath_next[0], makeTuple(secondPath_next[1])
 
     def BFS(self, begin: tuple, end: tuple):
-        print("bfs", begin, "to", end)
         path = self.BFS_Forward(begin, end)
         if len(path) == 0:
             return []
         return path
 
     def BFS_NoWall(self, begin: tuple, end: tuple):
-        print("bfs_noWall", begin, "to", end)
         path = self.BFS_Forward_No_Wall(begin, end)
         if len(path) == 0:
             return []
@@ -161,7 +159,6 @@ class SearchPath:
             children = self.g.index_based_dict[current].childs
             for child in children:
                 aDiamond = isDiamond(self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]])
-
                 if (not self.frontierStart[child]) and ((not aDiamond) or (aDiamond and child == goal)):
                     self.queueStart.append(child)
                     self.frontierStart[child] = True
@@ -223,8 +220,8 @@ class SearchPath:
             children = self.g.index_based_dict[current].childs
             for child in children:
                 aDiamond = isDiamond(self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]])
-                aBase = (self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]] == 'a')
-                if not self.frontierStart[child] and ((not aBase) or (aBase and child == goal)):
+
+                if not self.frontierStart[child]:
                     self.queueStart.append(child)
                     self.frontierStart[child] = True
                     self.g.index_based_dict[child].parentSrc = current
