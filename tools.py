@@ -1,5 +1,5 @@
 
-from base import BaseAgent, TurnData, Action
+from base import BaseAgent, TurnData, Action, AgentData
 
 
 class Node:
@@ -60,7 +60,7 @@ class SearchPath:
     def __init__(self, g: Graph):
         self.graphSize = g.rows * g.cols
         self.g = g
-        self.bases = find_bases(g.mapp)
+        self.bases = None
         # self.dpDistanceAndNext = [[None for _ in range(self.graphSize)] for _ in range(self.graphSize)]
         # for i in range(0, self.graphSize):
         #     self.dpDistanceAndNext[i][i] = (0, -1)
@@ -70,7 +70,8 @@ class SearchPath:
         self.queueStart = []
         self.queueGoal = []
 
-    def baseFind(self):
+    def baseFind(self, agent):
+        self.bases = find_bases(self.g.mapp, agent)
         for i in self.queueGoal:
             if i in self.bases:
                 return i
@@ -105,8 +106,8 @@ class SearchPath:
             return Action.RIGHT
 
     # BFS just returns (len(answer), nearestBaseIndex)
-    def distanceAndNext(self, start: tuple, goal: tuple):
-        back_nearestBase = self.BFS_Backward(goal)
+    def distanceAndNext(self, start: tuple, goal: tuple, agent):
+        back_nearestBase = self.BFS_Backward(goal, agent)
         forward = self.BFS_Forward(start, goal)
         frw = len(forward)
         back = len(back_nearestBase[0])
@@ -176,7 +177,7 @@ class SearchPath:
         return answer
 
 
-    def BFS_Backward(self, begin: tuple):
+    def BFS_Backward(self, begin: tuple, agent):
         self.frontierGoal = [False for _ in range(self.graphSize)]
         self.queueGoal = []
         goal = makeScallar(self.g.cols, *begin)
@@ -184,7 +185,7 @@ class SearchPath:
         self.frontierGoal[goal] = True
         self.queueGoal.append(goal)
 
-        nearestBaseIndex = self.baseFind()
+        nearestBaseIndex = self.baseFind(agent)
 
         while len(self.queueGoal) != 0 and nearestBaseIndex == -1:
             current = self.queueGoal.pop(0)
@@ -195,7 +196,7 @@ class SearchPath:
                     self.frontierGoal[child] = True
                     self.g.index_based_dict[child].parentGoal = current
                     self.g.index_based_dict[child].actionGoal = self.takeAction(current, child)
-            nearestBaseIndex = self.baseFind()
+            nearestBaseIndex = self.baseFind(agent)
         answer = []
         if not self.frontierGoal[goal]:
             return answer
@@ -220,8 +221,8 @@ class SearchPath:
             children = self.g.index_based_dict[current].childs
             for child in children:
                 aDiamond = isDiamond(self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]])
-                aBase = (self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]] == 'a')
-                if not self.frontierStart[child] and ((not aBase) or (aBase and child == goal)):
+
+                if not self.frontierStart[child]:
                     self.queueStart.append(child)
                     self.frontierStart[child] = True
                     self.g.index_based_dict[child].parentSrc = current
@@ -238,15 +239,27 @@ class SearchPath:
         return answer
 
 
-def find_diamonds_bases(bmap):
+def isDiamond(x):
+    if x == '0' or x == '1' or x == '2' or x == '3' or x == '4':
+        return True
+    return False
+
+
+def isBase(x):
+    if x == 'a' or x == 'b' or x == 'c' or x == 'd':
+        return True
+    return False
+
+
+def find_diamonds_bases(bmap, agent):
     diamonds = []
     bases = []
     for r in range(len(bmap)):
         for c in range(len(bmap[r])):
             if isDiamond(bmap[r][c]):
-                diamonds.append((r, c))
-            if bmap[r][c] == "a":
-                bases.append(r * len(bmap) + c)
+                diamonds.append((bmap[r][c], (r, c)))
+            if bmap[r][c] == str(agent.name).lower():
+                bases.append((r, c))
     return diamonds, bases
 
 
@@ -259,11 +272,11 @@ def find_bases_tuple(bmap):
     return bases
 
 
-def find_bases(bmap):
+def find_bases(bmap, agent):
     bases = []
     for r in range(len(bmap)):
         for c in range(len(bmap[r])):
-            if bmap[r][c] == "a":
+            if bmap[r][c] == agent.name.lower():
                 bases.append(r * len(bmap) + c)
     return bases
 
@@ -276,10 +289,6 @@ def find_diamonds(bmap):
                 diamonds.append((bmap[r][c], (r, c)))
     return diamonds
 
-def isDiamond(x):
-    if x == '0' or x == '1' or x == '2' or x == '3' or x == '4':
-        return True
-    return False
 
 def value(d):
     values = [2, 5, 3, 1, 10]
@@ -314,4 +323,19 @@ def joinLists(a: list, b: list):
             ans.append(b[j])
             j += 1
         index += 1
+    return ans
+
+
+def distinctContinuousColors(l: list):
+    colors = ["0", "1", "2", "3", "4"]
+    visited = [0 for _ in range(5)]
+    ans = 0
+    for i in range(len(l)):
+        tempCounter = 0
+        visited = [0 for _ in range(5)]
+        for j in range(i, i + 5):
+            if j < len(l) and l[j] in colors and visited[int(l[j])] == 0:
+                visited[int(l[j])] = 1
+                tempCounter += 1
+        ans = max(ans, tempCounter)
     return ans
