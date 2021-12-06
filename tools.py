@@ -220,8 +220,8 @@ class SearchPath:
             children = self.g.index_based_dict[current].childs
             for child in children:
                 aDiamond = isDiamond(self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]])
-
-                if not self.frontierStart[child]:
+                aBase = (self.g.mapp[makeTuple(self.g.cols, child)[0]][makeTuple(self.g.cols, child)[1]] == 'a')
+                if not self.frontierStart[child] and ((not aBase) or (aBase and child == goal)):
                     self.queueStart.append(child)
                     self.frontierStart[child] = True
                     self.g.index_based_dict[child].parentSrc = current
